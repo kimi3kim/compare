@@ -1,0 +1,144 @@
+Sub compare()
+
+Dim sheets_1 As Worksheet
+Dim sheets_2 As Worksheet
+Dim sheets_3 As Worksheet
+
+Dim myList_1 As Variant
+Dim myList_2 As Variant
+
+Dim i As Long
+Dim j As Long
+Dim k As Long
+Dim l As Long
+Dim m As Long
+Dim n As Long
+Dim o As Long
+Dim q As Long
+Dim r As Long
+
+Dim arrayColumn() As Long
+
+
+
+Dim counter As Long
+Dim noCounter As Long
+
+Dim sheet_1columnsnum As Long
+Dim sheet_2columnsnum As Long
+
+
+'sheet名は、用途に合わせて変更してください
+Set sheets_1 = Sheets("Sheet1")
+Set sheets_2 = Sheets("Sheet2")
+Set sheets_3 = Sheets("Sheet3")
+
+
+sheet_1columnsnum = Cells(1, sheets_1.Columns.Count).End(xlToLeft).Column
+sheet_2columnsnum = Cells(1, sheets_2.Columns.Count).End(xlToLeft).Column
+
+'各種シートのセルを配列に格納する
+sheets_1.Select
+myList_1 = sheets_1.Range("A1", Range("A" & Rows.Count).End(xlUp)).Resize(, sheet_1columnsnum).Value
+
+sheets_2.Select
+myList_2 = sheets_2.Range("A1", Range("A" & Rows.Count).End(xlUp)).Resize(, sheet_2columnsnum).Value
+
+sheets_1.Select
+counter = 0
+noCounter = 0
+k = 2
+m = 2
+q = 0
+
+ReDim arrayColumn(UBound(myList_1))
+
+
+For i = 1 To UBound(myList_1)
+
+    For l = 1 To UBound(myList_2)
+
+    '一度確認した行は飛ばす
+        For r = 0 To UBound(arrayColumn)
+            If arrayColumn(r) = l Then
+                GoTo Jump
+            End If
+
+        Next
+
+
+        For j = 1 To sheet_1columnsnum
+
+        '比較をして一致するか判断
+            If myList_1(i, j) <> myList_2(l, j) Then
+                noCounter = noCounter + 1
+
+                '行が一致しない場合
+                If noCounter = sheet_1columnsnum Then
+                    '最終行でない場合は次の行へ
+                    If l + 1 <= UBound(myList_2) Then
+                        Exit For
+                    Else
+                    'どの行とも一致しない場合は,除去されたと判断する
+                        sheets_1.Range(Cells(i, 1), Cells(i, sheet_1columnsnum)).Interior.Color = vbRed
+                        sheets_3.Range("C" & k).Value = sheets_1.Name & sheets_1.Range(Cells(i, 1), Cells(i, sheet_1columnsnum)).Address & "除去されています。"
+
+                        k = k + 1
+                        noCounter = 0
+
+                    End If
+                End If
+
+            Else
+                counter = counter + 1
+
+
+                '行の値が一部変更されている場合, その箇所の色を変更する
+                'counterの数値で判断する
+                If counter >= 1 Then
+
+                    For n = 1 To sheet_1columnsnum
+                        If myList_1(i, n) <> myList_2(l, n) Then
+                            sheets_1.Cells(i, n).Interior.Color = vbYellow
+                            sheets_3.Range("A" & m).Value = sheets_1.Name & sheets_1.Cells(i, n).Address & "変更されています。"
+
+                            sheets_2.Cells(l, n).Interior.Color = vbYellow
+                            sheets_2.Cells(l, sheet_2columnsnum + 1).Value = "変更あり"
+                            sheets_3.Range("B" & m).Value = sheets_2.Name & sheets_2.Cells(l, n).Address & "変更されています。"
+                            m = m + 1
+
+
+
+                        Else
+                         counter = counter + 1
+
+                        End If
+                    Next n
+                    '行の値に変更がなければ
+
+                       If counter = sheet_1columnsnum + 1 Then
+
+                        sheets_2.Cells(l, sheet_2columnsnum + 1).Value = "変更なし"
+
+
+                        End If
+
+                    '配列に格納する
+                    arrayColumn(q) = l
+                    q = q + 1
+                    GoTo Label
+                End If
+            End If
+
+
+        Next j
+Jump:
+        counter = 0
+        noCounter = 0
+
+    Next l
+Label:
+    counter = 0
+Next i
+
+End Sub
