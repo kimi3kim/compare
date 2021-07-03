@@ -1,0 +1,267 @@
+Option Explicit
+
+Function getRange(ByVal sh As Worksheet) As Long()
+  Dim sheet As Worksheet
+  Set sheet = sh
+
+  Dim arr(2) As Long
+
+  Dim counter As Long
+  Dim counternum As Long
+  Dim rownum As Long
+  Dim num As Long
+  Dim columnNum As Long
+
+  counter = 1
+  rownum = 0
+  counternum = 0
+
+  Do
+
+    num = sheet.Cells(counter, Columns.Count).End(xlToLeft).Column
+    If rownum < num Then
+        rownum = sheet.Cells(counter, Columns.Count).End(xlToLeft).Column
+    ElseIf num = 1 Then
+      counternum = counternum + 1
+
+      If counternum = 10 Then
+        Exit Do
+      End If
+    End If
+
+    counter = counter + 1
+
+  Loop
+
+ Dim colcounter As Long
+ Dim colcounternum As Long
+ Dim colunmNum As Long
+
+    colcounter = 1
+    columnNum = 0
+    colcounternum = 0
+
+  Do
+    If columnNum < sheet.Cells(Rows.Count, colcounter).End(xlUp).Row Then
+      columnNum = sheet.Cells(Rows.Count, colcounter).End(xlUp).Row
+
+    ElseIf sheet.Cells(Rows.Count, colcounter).End(xlUp).Row = 1 Then
+
+      colcounternum = colcounternum + 1
+
+          If colcounternum = 10 Then
+
+            Exit Do
+
+          End If
+    End If
+
+    colcounter = colcounter + 1
+
+  Loop
+
+  arr(0) = columnNum
+  arr(1) = rownum
+
+  getRange = arr()
+
+End Function
+
+Sub comper()
+    Dim sheet As Worksheet
+    Set sheet = ActiveSheet
+
+    Dim sheetList As Variant
+    Dim rownum As Long
+    Dim colnum As Long
+
+    Dim test() As Long
+
+    Dim Sheet2 As Worksheet
+    Set Sheet2 = Sheets("比較対象")
+
+    Dim Sheet3 As Worksheet
+    Set Sheet3 = Sheets("書き出し")
+
+    Dim Sheet4List As Variant
+    Dim countnum As Long
+
+    Dim sheet2colnum As Long
+    Dim sheet3row As Long
+    Dim sheet3List As Variant
+
+    Dim copy As Boolean
+    Dim switch As Boolean
+
+    Dim sheetList2 As Variant
+
+    Dim rownum2 As Long
+    Dim colnum2 As Long
+
+    Dim rownumlarger As Long
+    Dim colnumlarger As Long
+
+    Dim num As Long
+    Dim numarr() As Long
+
+    Dim colordeleatnum As Long
+
+    Dim a As Long
+    Dim b As Long
+    Dim c As Long
+
+    Dim d As Long
+    Dim e As Long
+
+    test() = getRange(sheet)
+
+    rownum = test(0)
+    colnum = test(1)
+
+    sheetList = sheet.Range(Cells(1, 1), Cells(rownum, colnum))
+
+    Sheet2.Select
+
+    test() = getRange(Sheet2)
+    rownum2 = test(0)
+    colnum2 = test(1)
+
+    sheetList2 = Sheet2.Range(Cells(1, 1), Cells(rownum2, colnum2))
+
+    If rownum >= rownum2 Then
+
+        rownumlarger = rownum
+
+    Else
+
+        rownumlarger = rownum2
+
+    End If
+
+    If colnum >= colnum2 Then
+
+        colnumlarger = colnum
+
+    Else
+
+        colnumlarger = colnum2
+
+    End If
+
+    copy = True
+    switch = False
+
+    countnum = 0
+
+    ReDim numarr(rownumlarger - 1)
+    numarr(0) = 0
+
+
+    For a = 1 To rownumlarger
+        copy = True
+        num = 0
+        For b = 1 To colnumlarger
+            If sheetList(a, b) = sheetList2(a, b) And IsEmpty(sheetList(a, b)) = False Then
+
+                num = num + 1
+
+
+                If numarr(a - 1) <> a And num >= colnumlarger - 1 Then
+                    numarr(a - 1) = a
+                End If
+
+            Else
+                Sheet2.Cells(a, b).Interior.ColorIndex = 13
+                sheet2colnum = Sheet2.Cells(a, Columns.Count).End(xlToLeft).Column
+
+                If Sheet2.Range(Cells(a, b), Cells(a, sheet2colnum)).Interior.ColorIndex = 13 Then
+                    Sheet3.Select
+
+                    Sheet3.Range(Cells(sheet3row, 1), Cells(sheet3row, sheet2colnum)).Interior.ColorIndex = 13
+
+                    Sheet2.Select
+                End If
+
+
+                If copy = True Then
+                    sheet3List = Sheet2.Range(Cells(a, 1), Cells(a, colnumlarger))
+                    Sheet3.Select
+
+                    If switch = False Then
+
+                        sheet3row = Sheet3.Cells(Rows.Count, 1).End(xlUp).Row
+                        switch = True
+
+
+                    Else
+                        sheet3row = Sheet3.Cells(Rows.Count, 1).End(xlUp).Row + 1
+
+                    End If
+
+                    Sheet3.Range(Cells(sheet3row, 1), Cells(sheet3row, colnumlarger)) = sheet3List
+                    Sheet3.Cells(sheet3row, colnumlarger + 1).Value = a & " 行目"
+
+                    copy = False
+                    Sheet2.Select
+                End If
+            End If
+        Next b
+    Next a
+
+    Sheet3.Select
+
+    For a = 1 To rownumlarger
+        If Sheet3.Cells(a, 1).Interior.ColorIndex <> xlNone Then
+            Sheet4List = Sheet3.Range(Cells(a, 1), Cells(a, colnumlarger))
+
+
+            For b = 0 To UBound(numarr)
+                If numarr(b) = 0 Then
+
+                    For c = 1 To colnumlarger
+                        If Sheet4List(1, c) = sheetList(b + 1, c) And IsEmpty(sheetList(b + 1, c)) = False Then
+
+                            countnum = countnum + 1
+                        End If
+                    Next c
+                End If
+
+                If countnum = colnumlarger Then
+                    Sheet3.Range(Cells(a, 1), Cells(a, sheet2colnum)).Interior.ColorIndex = 34
+                    Sheet3.Cells(a, colnumlarger + 2).Value = "はシート：" & sheet.Name & " の " & b + 1 & "行目と一致"
+                    colordeleatnum = Replace(Sheet3.Cells(a, colnumlarger + 1).Value, "行目", "")
+
+                    Sheet2.Select
+                    Sheet2.Range(Cells(colordeleatnum, 1), Cells(colordeleatnum, colnumlarger)).Interior.ColorIndex = 0
+
+                    countnum = 0
+                    Exit For
+
+                ElseIf b = UBound(numarr) And countnum = 0 Then
+                    Sheet3.Range(Cells(a, 1), Cells(a, sheet2colnum)).Interior.ColorIndex = 3
+                    Sheet3.Cells(a, colnumlarger + 2).Value = "はシート：" & sheet.Name & "   存在しない行です"
+                    countnum = 0
+                    Exit For
+
+                ElseIf countnum < colnumlarger And countnum > 1 Then
+                    colordeleatnum = Replace(Sheet3.Cells(a, colnumlarger + 1).Value, "行目", "")
+
+                    For d = 1 To colnumlarger
+                        If sheetList(1, d) = sheetList(b + 1, d) Then
+                            Sheet3.Cells(a, d).Interior.ColorIndex = 0
+                            Sheet2.Select
+                            Sheet2.Cells(colordeleatnum, d).Interior.ColorIndex = 0
+                            Sheet3.Select
+                        Else
+                            Sheet3.Cells(a, colnumlarger + 2).Value = "はシート：" & Sheet3.Name & " の " & b + 1 & "行目 と対応する可能性あり"
+                        End If
+                    Next d
+                    countnum = 0
+                    Exit For
+                End If
+                countnum = 0
+            Next b
+        End If
+    Next a
+
+ End Sub
